@@ -73,7 +73,6 @@ export default function Column({
   const handleDragOver = (e) => {
     e.preventDefault();
   };
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
