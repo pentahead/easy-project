@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, Link } from "@tanstack/react-router";
 
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(
@@ -32,7 +32,9 @@ export default function Navbar() {
 
   return (
     <nav className="flex justify-between items-center p-4 bg-blue-800 dark:bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg shadow-xl">
-      <h1 className="text-xl font-bold text-white">Easy Project</h1>
+      <Link to="/" className="text-xl font-bold text-dark dark:text-white">
+        Easy Project
+      </Link>
       <div className="flex items-center">
         <button
           className="mr-4 text-white"
@@ -52,7 +54,7 @@ export default function Navbar() {
             onClick={() => setDropdownOpen((prev) => !prev)}
           />
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 text-black dark:text-white shadow-lg rounded-md p-2 z-10">
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 text-black dark:text-white shadow-lg rounded-md p-2 z-50">
               <button
                 className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                 onClick={handleProfile}

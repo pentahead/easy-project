@@ -1,11 +1,32 @@
 import React, { useState } from "react";
 import { addData } from "../../utils/idb";
 import { v4 as uuidv4 } from "uuid";
+import ToastContainer from "../Toast/ToastContainer";
 
 export default function Sidebar({ boards, onSelectBoard, setBoards }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [currentpageIndex, setCurrentpageIndex] = useState(0);
+
+  const toastContainerRef = React.createRef();
+
+  const boardsPerPage = 10;
+  const totalPages = Math.ceil(boards.length / boardsPerPage);
+  const handleNextBoard = () => {
+    if (currentpageIndex < totalPages - 1) {
+      setCurrentpageIndex(currentpageIndex + 1);
+    }
+  };
+
+  const handlePreviousBoard = () => {
+    if (currentpageIndex > 0) {
+      setCurrentpageIndex(currentpageIndex - 1);
+    }
+  };
+
+  const startIndex = currentpageIndex * boardsPerPage;
+  const currentBoards = boards.slice(startIndex, startIndex + boardsPerPage);
 
   const handleAddBoard = async () => {
     if (!newBoardTitle) {
@@ -22,6 +43,10 @@ export default function Sidebar({ boards, onSelectBoard, setBoards }) {
       ],
     };
     await addData("boards", newBoard);
+    toastContainerRef.current.showToast(
+      "New Board Successfully added!",
+      "success"
+    );
     setBoards((prevBoards) => [...prevBoards, newBoard]);
     setNewBoardTitle("");
     setIsDropdownOpen(false);
@@ -32,7 +57,11 @@ export default function Sidebar({ boards, onSelectBoard, setBoards }) {
   return (
     <div className="flex">
       <aside
-        className={`w-64 bg-blue-900 dark:bg-gray-900 bg-opacity-50 backdrop-blur-lg shadow-xl p-4 flex flex-col transition-transform duration-300 ${
+        className={`w-64 shadow-2xl shadow-slate-900 text-white 
+bg-clip-padding backdrop-filter bg-white dark:bg-black 
+bg-opacity-10 backdrop-blur-lg dark:bg-opacity-60 
+dark:shadow-black p-4 flex flex-col 
+transition-transform duration-300 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-0"
         }`}
         style={{ width: isSidebarOpen ? "16rem" : "3rem" }}
@@ -40,12 +69,12 @@ export default function Sidebar({ boards, onSelectBoard, setBoards }) {
         {isSidebarOpen ? (
           <>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold mr-2">
+              <h2 className="text-lg font-bold mr-2 text-gray-800 dark:text-white">
                 All Boards ({countBoard})
               </h2>
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="text-white"
+                className="text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded-full"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -65,19 +94,21 @@ export default function Sidebar({ boards, onSelectBoard, setBoards }) {
         ) : (
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="mb-4 text-white flex items-center"
+            className="mb-4 text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700  rounded-full flex items-center"
           >
             {/* Chevron Icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="size-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-6"
             >
               <path
-                fillRule="evenodd"
-                d="M15.28 9.47a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 1 1-1.06-1.06L13.69 10 9.97 6.28a.75.75 0 0 1 1.06-1.06l4.25 4.25ZM6.03 5.22l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L8.69 10 4.97 6.28a.75.75 0 0 1 1.06-1.06Z"
-                clipRule="evenodd"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5"
               />
             </svg>
           </button>
@@ -86,52 +117,108 @@ export default function Sidebar({ boards, onSelectBoard, setBoards }) {
         {isSidebarOpen && (
           <>
             <ul className="flex-grow">
-              {boards.map((board) => (
-                <li key={board.id} className="mb-2">
+              {currentBoards.map((board, index) => (
+                <li key={index} className="mb-2">
                   <button
                     onClick={() => onSelectBoard(board)}
-                    className="w-full text-left bg-gray-800 text-white rounded-lg p-4 shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-left bg-slate-50 dark:bg-gray-700 bg-opacity-60 dark:bg-opacity-60 text-gray-700 dark:text-white rounded-lg p-4 shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {board.title}
                   </button>
                 </li>
               ))}
             </ul>
+            <div className="flex justify-between items-center mb-4">
+              <button
+                onClick={handlePreviousBoard}
+                disabled={currentpageIndex === 0}
+                className="text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded-full"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="size-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                </svg>
+              </button>
+              <span className="text-lg font-semibold text-gray-700 dark:text-white">
+                Page {currentpageIndex + 1} of {totalPages}
+              </span>
+              <button
+                onClick={handleNextBoard}
+                disabled={currentpageIndex === totalPages - 1}
+                className="text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded-full"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="size-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                </svg>
+              </button>
+            </div>
 
             <div className="mt-auto relative">
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="py-2 px-4 text-white text-gray-700 bg-clip-padding backdrop-filter 
+             backdrop-blur-lg bg-opacity-70 bg-blue-500 
+             hover:bg-opacity-30 rounded-lg shadow-lg 
+             transition-colors duration-300"
               >
-                Add Board
+                New Board
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute bottom-full mb-2 bg-white shadow-lg rounded p-4 w-64">
-                  <h3 className="text-lg font-bold mb-2">Tambah Board Baru</h3>
+                <div className="absolute bottom-full mb-2 bg-white dark:bg-gray-700 shadow-lg rounded p-4 w-64">
+                  <h3 className="text-lg font-bold mb-2 text-gray-700 dark:text-white">
+                    Create New Board
+                  </h3>
                   <div className="mb-4">
                     <input
                       type="text"
                       value={newBoardTitle}
                       onChange={(e) => setNewBoardTitle(e.target.value)}
                       placeholder="Masukkan nama board baru"
-                      className="border rounded p-2 w-full"
+                      className="border rounded p-2 w-full text-gray-800"
                     />
                   </div>
                   <button
                     onClick={handleAddBoard}
-                    className="ml-2 bg-blue-500 text-white rounded p-2"
+                    className="ml-2 text-white text-gray-700 bg-clip-padding backdrop-filter 
+             backdrop-blur-lg bg-opacity-70 bg-blue-500 
+             hover:bg-opacity-30 rounded-lg shadow-lg 
+             transition-colors duration-300 p-2"
                   >
-                    Tambah Board
+                    Add
                   </button>
                   <button
                     onClick={() => {
                       setIsDropdownOpen(false);
                       setNewBoardTitle("");
                     }}
-                    className="ml-2 bg-red-500 text-white rounded p-2"
+                    className="ml-2 text-white text-gray-700 bg-clip-padding backdrop-filter 
+             backdrop-blur-lg bg-opacity-70 bg-red-500 
+             hover:bg-opacity-30 rounded-lg shadow-lg 
+             transition-colors duration-300 p-2"
                   >
-                    Tutup
+                    Close
                   </button>
                 </div>
               )}
@@ -139,6 +226,7 @@ export default function Sidebar({ boards, onSelectBoard, setBoards }) {
           </>
         )}
       </aside>
+      <ToastContainer ref={toastContainerRef} />
     </div>
   );
 }

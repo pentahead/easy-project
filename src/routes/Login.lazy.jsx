@@ -14,6 +14,17 @@ function Login() {
 
   const toastContainerRef = React.createRef();
 
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("theme") === "dark" ||
+      (!localStorage.getItem("theme") &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
+  );
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    localStorage.setItem("theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
+
   useEffect(() => {
     if (localStorage.getItem("isAuthenticated")) {
       navigate({ to: "/" });
@@ -39,11 +50,17 @@ function Login() {
 
   return (
     <body
-      className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-cover h-screen flex justify-center items-center"
+      className="bg-light-bg dark:bg-dark-bg bg-cover h-screen flex justify-center items-center"
       style={{ textShadow: "0px 1px 4px #77A" }}
     >
+
       <ToastContainer ref={toastContainerRef} />
-      <div className="w-96 shadow-2xl shadow-slate-900 text-white bg-clip-padding backdrop-filter bg-white bg-opacity-10 backdrop-blur-md py-10 px-8 rounded-md">
+      <div
+        className="w-96 shadow-2xl shadow-slate-900 text-white 
+bg-clip-padding backdrop-filter bg-white dark:bg-black 
+bg-opacity-10 backdrop-blur-lg dark:bg-opacity-40 
+dark:shadow-black py-10 px-8 rounded-md"
+      >
         <div className="text-center text-2xl">Login</div>
         <form className="mt-6" onSubmit={handleLogin}>
           <div className="mb-4">
