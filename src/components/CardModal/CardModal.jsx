@@ -15,7 +15,11 @@ export default function CardModal({ isOpen, onClose, onAddCard }) {
       image,
     };
     onAddCard(newCard);
-    onClose(); 
+    setCardName(""); // Reset input
+    setDescription(""); // Reset input
+    setAssignee(""); // Reset input
+    setImage(null); // Reset input
+    onClose();
   };
 
   if (!isOpen) return null;

@@ -2,6 +2,10 @@ module.exports = {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      backgroundImage: {
+        "dark-bg": "url('/src/assets/dark.svg')",
+        "light-bg": "url('/src/assets/light.svg')",
+      },
       colors: {
         success: "#2ecc71",
         error: "#e74c3c",

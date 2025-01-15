@@ -18,16 +18,35 @@ export default function Column({
   const [selectedCard, setSelectedCard] = useState(null);
   const dropdownRef = useRef(null);
 
+  const handleAddCard = (newCard) => {
+    onAddCard(newCard);
+    setIsModalOpen(false);
+  };
+
+  const handleUpdateCard = (updatedCard) => {
+    setIsDetailModalOpen(false);
+  };
+  
   const handleEditColumn = () => {
     onEditColumn(newColumnTitle);
     setNewColumnTitle(newColumnTitle);
     setIsDropdownOpen(false);
   };
+  
 
-  const handleAddCard = (newCard) => {
-    onAddCard(newCard);
-    setIsModalOpen(false);
+  const handleMoveCard = (card, targetColumnTitle) => {
+    const updatedColumns = selectedBoard.columns.map((column) => {
+      if (column.title === targetColumnTitle) {
+        return { ...column, cards: [...column.cards, card] }; // Tambahkan kartu ke kolom target
+      }
+      return {
+        ...column,
+        cards: column.cards.filter((c) => c.title !== card.title),
+      };
+    });
+    // Update state or call a function to update the board with new columns
   };
+  
 
   const handleCardClick = (card) => {
     console.log("Selected Card:", card);
@@ -35,9 +54,7 @@ export default function Column({
     setIsDetailModalOpen(true);
   };
 
-  const handleUpdateCard = (updatedCard) => {
-    setIsDetailModalOpen(false);
-  };
+ 
 
   const handleDragStart = (card) => {
     const data = JSON.stringify(card);
@@ -56,6 +73,7 @@ export default function Column({
   const handleDragOver = (e) => {
     e.preventDefault();
   };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -69,14 +87,14 @@ export default function Column({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
   return (
     <div className="flex-1">
       <div
-        className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 m-2 flex flex-col h-full"
+        className="bg-slate-50 dark:bg-gray-700 bg-opacity-60 dark:bg-opacity-60 text-gray-700 dark:text-white  p-4 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-4 m-2 flex flex-col h-full"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
-        
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-lg">{newColumnTitle}</h3>
           <div className="relative">
@@ -100,14 +118,14 @@ export default function Column({
               </svg>
             </button>
             {isDropdownOpen && (
-              <div className="absolute right-0 bg-white shadow-lg rounded mt-2">
+              <div className="absolute right-0 bg-white dark:bg-gray-700 shadow-lg rounded mt-2">
                 <div className="p-2">
                   <div className="items-center mb-2">
                     <input
                       type="text"
                       value={newColumnTitle}
                       onChange={(e) => setNewColumnTitle(e.target.value)}
-                      className="border rounded p-1 flex-grow"
+                      className="border rounded p-1 flex-grow text-gray-800"
                       placeholder="New Column Name"
                     />
                   </div>
