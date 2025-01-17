@@ -92,14 +92,14 @@ export default function Sidebar({ boards, onSelectBoard }) {
   return (
     <div className="flex">
       <aside
-        className={`w-64 shadow-2xl shadow-slate-900 text-white 
+        className={`w-full md:w-64 shadow-2xl shadow-slate-900 text-white 
 bg-clip-padding backdrop-filter bg-white dark:bg-black 
 bg-opacity-10 backdrop-blur-lg dark:bg-opacity-60 
 dark:shadow-black p-4 flex flex-col 
 transition-transform duration-300 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-0"
         }`}
-        style={{ width: isSidebarOpen ? "16rem" : "3rem" }}
+        style={{ width: isSidebarOpen ? "100%" : "3rem" }}
       >
         {isSidebarOpen ? (
           <>
