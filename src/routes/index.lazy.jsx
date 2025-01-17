@@ -81,15 +81,15 @@ function Index() {
 
   return (
     <div
-      className="h-screen flex flex-col bg-light-bg dark:bg-dark-bg bg-cover"
+      className="h-screen flex flex-col bg-light-bg dark:bg-dark-bg bg-cover overflow-y-auto"
       style={{ textShadow: "0px 1px 2px #77A" }}
     >
-      <Navbar className="w-full" />
+      <Navbar className="w-full "/>
       <div className="flex flex-1 flex-col md:flex-row">
         <Sidebar
           boards={boards}
           onSelectBoard={handleBoardUpdate}
-          className="h-full w-full md:w-1/4"
+          className="h-full w-full md:w-1/4 "
         />
         <main className="flex-1 p-4 flex flex-col">
           <div className="flex items-center justify-between">
