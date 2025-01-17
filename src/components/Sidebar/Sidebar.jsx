@@ -220,7 +220,7 @@ transition-transform duration-300 ${
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute bottom-full mb-2 bg-white dark:bg-gray-700 shadow-lg rounded p-4 w-64">
+                <div className="absolute bottom-full mb-2 bg-white dark:bg-gray-700 shadow-lg rounded p-4 w-64"  >
                   <h3 className="text-lg font-bold mb-2 text-gray-700 dark:text-white">
                     Create New Board
                   </h3>
