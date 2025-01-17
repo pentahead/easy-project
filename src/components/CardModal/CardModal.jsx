@@ -1,24 +1,47 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function CardModal({ isOpen, onClose, onAddCard }) {
+export default function CardModal({
+  isOpen,
+  onClose,
+  onAddCard,
+  onUpdateCard,
+  selectedCard,
+}) {
   const [cardName, setCardName] = useState("");
   const [description, setDescription] = useState("");
   const [assignee, setAssignee] = useState("");
   const [image, setImage] = useState(null);
 
+  useEffect(() => {
+    if (selectedCard) {
+      setCardName(selectedCard.title);
+      setDescription(selectedCard.description);
+      setAssignee(selectedCard.assignee);
+      setImage(selectedCard.image);
+    } else {
+      setCardName("");
+      setDescription("");
+      setAssignee("");
+      setImage(null);
+    }
+  }, [selectedCard]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const newCard = {
+    const cardData = {
+      id: selectedCard ? selectedCard.id : Date.now(), 
       title: cardName,
       description,
       assignee,
       image,
     };
-    onAddCard(newCard);
-    setCardName(""); // Reset input
-    setDescription(""); // Reset input
-    setAssignee(""); // Reset input
-    setImage(null); // Reset input
+
+    if (selectedCard) {
+      onUpdateCard(cardData);
+    } else {
+      onAddCard(cardData);
+    }
+
     onClose();
   };
 

@@ -4,7 +4,8 @@ import Protected from "../components/Auth/Protected";
 import Navbar from "../components/Navbar/Navbar";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Board from "../components/Board/Board";
-import { addData, getAllData, deleteData, updateData } from "../utils/idb";
+import { getAllBoards } from "../services/board";
+import { debounce } from "lodash";
 
 export const Route = createLazyFileRoute("/")({
   component: () => (
@@ -17,71 +18,66 @@ export const Route = createLazyFileRoute("/")({
 function Index() {
   const [boards, setBoards] = useState([]);
   const [selectedBoard, setSelectedBoard] = useState(null);
-  const [newBoardTitle, setNewBoardTitle] = useState("");
-  const [currentBoardIndex, setCurrentBoardIndex] = useState(0);
 
-  useEffect(() => {
-    const fetchBoards = async () => {
-      const data = await getAllData("boards");
-      if (Array.isArray(data)) {
-        setBoards(data);
-        const savedBoardId = localStorage.getItem("selectedBoardId");
-        if (savedBoardId) {
-          const savedBoard = data.find((board) => board.id === savedBoardId);
-          if (savedBoard) {
-            setSelectedBoard(savedBoard);
-          }
-        }
-      } else {
-        console.error("Data yang diterima bukan array:", data);
-      }
-    };
-    fetchBoards();
-  }, []);
-
-  const handleSelectBoard = (board) => {
+  const handleBoardUpdate = (board) => {
     setSelectedBoard(board);
-    localStorage.setItem("selectedBoardId", board.id);
-  };
-
-  const handleEditBoard = async (id, newTitle) => {
-    const updatedBoard = {
-      ...boards.find((board) => board.id === id),
-      title: newTitle,
-    };
-    await updateData("boards", id, updatedBoard);
-    setBoards((prevBoards) =>
-      prevBoards.map((board) => (board.id === id ? updatedBoard : board))
-    );
-  };
-
-  const handleAddColumn = (newColumn) => {
-    if (selectedBoard) {
-      const updatedBoard = {
-        ...selectedBoard,
-        columns: [...selectedBoard.columns, newColumn],
-      };
-      setSelectedBoard(updatedBoard);
-      setBoards((prevBoards) =>
-        prevBoards.map((board) =>
-          board.id === selectedBoard.id ? updatedBoard : board
-        )
-      );
-    }
-  };
-
-  const handleDeleteBoard = async (id) => {
-    if (!id) {
-      console.error("ID tidak valid untuk menghapus board");
-      return;
-    }
-    await deleteData("boards", id);
-    setBoards((prevBoards) => prevBoards.filter((board) => board.id !== id));
-    if (selectedBoard && selectedBoard.id === id) {
-      setSelectedBoard(null);
+    if (board) {
+      localStorage.setItem("selectedBoardId", board.id);
+    } else {
       localStorage.removeItem("selectedBoardId");
     }
   };
+
+  // Load boards on initial render
+  useEffect(() => {
+    const fetchBoards = async () => {
+      try {
+        const result = await getAllBoards();
+        if (result.success) {
+          setBoards(result.data);
+          const savedBoardId = localStorage.getItem("selectedBoardId");
+          if (savedBoardId) {
+            const savedBoard = result.data.find(
+              (board) => board.id === savedBoardId
+            );
+            if (savedBoard) {
+              setSelectedBoard(savedBoard);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching boards:", error);
+      }
+    };
+
+    fetchBoards();
+  }, []);
+
+  //  update boards
+  useEffect(() => {
+    const handleBoardUpdate = debounce(async () => {
+      try {
+        const result = await getAllBoards();
+        if (result.success) {
+          setBoards(result.data);
+        }
+      } catch (error) {
+        console.error("Error updating boards:", error);
+      }
+    }, 300);
+
+    const events = ["boardUpdated", "boardAdded", "boardDeleted"];
+    events.forEach((event) =>
+      window.addEventListener(event, handleBoardUpdate)
+    );
+
+    return () => {
+      events.forEach((event) =>
+        window.removeEventListener(event, handleBoardUpdate)
+      );
+      handleBoardUpdate.cancel();
+    };
+  }, []);
 
   return (
     <div
@@ -92,12 +88,7 @@ function Index() {
       <div className="flex flex-1 flex-col md:flex-row">
         <Sidebar
           boards={boards}
-          setBoards={setBoards}
-          // onSelectBoard={handleSelectBoard}
-          onSelectBoard={(board) => {
-            setSelectedBoard(board);
-            setCurrentBoardIndex(boards.indexOf(board));
-          }}
+          onSelectBoard={handleBoardUpdate}
           className="h-full w-full md:w-1/4"
         />
         <main className="flex-1 p-4 flex flex-col">
@@ -144,21 +135,10 @@ function Index() {
           </div>
 
           {selectedBoard ? (
-            <>
-              <Board
-                title={selectedBoard.title}
-                onEdit={(newTitle) =>
-                  handleEditBoard(selectedBoard.id, newTitle)
-                }
-                onDelete={() => {
-                  handleDeleteBoard(selectedBoard.id);
-                  setSelectedBoard(null);
-                }}
-                initialColumns={selectedBoard.columns}
-                onAddColumn={handleAddColumn}
-                selectedBoard={selectedBoard}
-              />
-            </>
+            <Board
+              selectedBoard={selectedBoard}
+              onBoardUpdate={handleBoardUpdate}
+            />
           ) : (
             <p className="text-gray-800 mt-20 dark:text-white text-center">
               Silakan pilih board dari sidebar
