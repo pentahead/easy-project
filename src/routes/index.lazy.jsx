@@ -123,7 +123,7 @@ function Index() {
             Welcome to Easy Project App! Let's build cool Projects together
           </h1>
           {/* Search Form */}
-          <form className="mt-4 md:mt-0 md:ml-auto mb-2 relative">
+          <form className="mt-4 md:mt-0 md:ml-auto mb-2">
             <label
               htmlFor="default-search"
               className="sr-only text-sm font-medium text-gray-900 dark:text-white"

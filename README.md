@@ -42,6 +42,7 @@ This application is designed to simplify project management for teams or individ
 | Authentication: one user only                                   | ✅     |
 | User Store and Logout                                                      | ✅     |
 | Pure Taillwind CSS| ✅     |
+| Filter: Search by keyword| ✅     |
 | Pagination| ✅     |
 | CRUD using IndexDB                                                          | ✅     |
 | Protected Routes: only Authenticated user                                               | ✅     |
