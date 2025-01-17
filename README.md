@@ -7,7 +7,9 @@
 </p>
 ## 🖼️ Preview
 
-<img src="Mockup.png" alt="preview">
+<img src="./mockups/1.jpeg" alt="preview">
+<img src="./mockups/2.jpeg" alt="preview">
+<img src="./mockups/3.jpeg" alt="preview">
 
 
 Account:
