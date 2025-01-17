@@ -93,7 +93,7 @@ export default function Board({ selectedBoard, onBoardUpdate }) {
   };
 
   return (
-    <div className="shadow-2xl shadow-slate-900 text-white bg-clip-padding backdrop-filter bg-white dark:bg-black bg-opacity-10 backdrop-blur-lg dark:bg-opacity-60 dark:shadow-black p-4 flex flex-col transition-transform duration-300 m-2 rounded-md flex-grow h-full">
+    <div className="overflow-x-auto shadow-2xl shadow-slate-900 text-white bg-clip-padding backdrop-filter bg-white dark:bg-black bg-opacity-10 backdrop-blur-lg dark:bg-opacity-60 dark:shadow-black p-4 flex flex-col transition-transform duration-300 m-2 rounded-md flex-grow h-full">
       <div className="flex justify-between items-center">
         <div className="flex gap-2 items-center mb-4">
           <svg
@@ -126,7 +126,7 @@ export default function Board({ selectedBoard, onBoardUpdate }) {
             </h2>
           )}
         </div>
-        <div>
+        <div className="flex gap-2">
           <button onClick={handleEditClick} className="text-blue-500 mr-2">
             {isEditing ? (
               <svg
@@ -181,7 +181,7 @@ export default function Board({ selectedBoard, onBoardUpdate }) {
 
       <hr className="h-px my-2 bg-black border-0" />
 
-      <div className="flex justify-between items-start h-full">
+      <div className="flex justify-between items-start h-full ">
         <div className="flex h-full w-full">
           {columns.map((column) => (
             <Column
@@ -192,24 +192,24 @@ export default function Board({ selectedBoard, onBoardUpdate }) {
           ))}
         </div>
         <button
-          onClick={handleAddColumn}
-          className="py-1 px-2 text-white bg-clip-padding backdrop-filter backdrop-blur-lg bg-opacity-70 bg-green-500 hover:bg-opacity-30 rounded-lg shadow-lg transition-colors duration-300 rounded ml-auto"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="size-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4.5v15m7.5-7.5h-15"
-            />
-          </svg>
-        </button>
+  onClick={handleAddColumn}
+  className="flex-grow text-white bg-green-500 hover:bg-green-400 py-2 px-4 rounded-lg shadow-lg text-center"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className="h-6 w-6 mx-auto"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 4.5v15m7.5-7.5h-15"
+    />
+  </svg>
+</button>
       </div>
       <ToastContainer ref={toastContainerRef} />
     </div>

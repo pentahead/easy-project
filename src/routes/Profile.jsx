@@ -80,7 +80,9 @@ function Profile() {
     >
       <Navbar className="w-full" />
       <div className="flex flex-1 flex-col md:flex-row justify-center items-center ">
-        <div className="w-full max-w-md md:max-w-lg lg:max-w-xl h-[80%] overflow-y-auto shadow-2xl shadow-slate-900 text-white bg-clip-padding backdrop-filter bg-white dark:bg-dark bg-opacity-10 backdrop-blur-md py-10 px-8 rounded-md relative">
+        <div className="w-full max-w-md md:max-w-lg lg:max-w-xl h-[80%] overflow-y-auto backdrop-filter bg-white dark:bg-black 
+bg-opacity-30 backdrop-blur-lg dark:bg-opacity-40 
+dark:shadow-black py-10 px-8 rounded-md relative">
           <div
             className="h-32 md:h-40 w-full bg-cover bg-center rounded-t-md bg-indigo-500"
             style={{ backgroundImage: `url(${bannerImage})` }}
