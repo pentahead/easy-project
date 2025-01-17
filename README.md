@@ -5,6 +5,7 @@
 <p align="center">
 
 </p>
+
 ## 🖼️ Preview
 
 <img src="./mockups/1.jpeg" alt="preview">
