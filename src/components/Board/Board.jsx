@@ -1,93 +1,99 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { addBoard, updateBoard, deleteBoard } from "../../services/board";
 import ToastContainer from "../Toast/ToastContainer";
 import Column from "../Column/Column";
-import { updateData, deleteData } from "../../utils/idb";
 
-export default function Board({
-  title,
-  onEdit,
-  onDelete,
-  onAddColumn,
-  selectedBoard,
-}) {
+export default function Board({ selectedBoard, onBoardUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [newTitle, setNewTitle] = useState(title);
-  const [columns, setColumns] = useState(selectedBoard.columns);
-  const toastContainerRef = React.createRef();
-
-  // Update newTitle when title prop changes
-  useEffect(() => {
-    setNewTitle(title);
-  }, [title]);
+  const [boardTitle, setBoardTitle] = useState("");
+  const [columns, setColumns] = useState(selectedBoard?.columns || []);
+  const toastContainerRef = useRef();
 
   useEffect(() => {
-    setColumns(selectedBoard.columns); // Memastikan state kolom diperbarui saat selectedBoard berubah
-  }, [selectedBoard]);
-
-  const handleEditClick = () => {
-    if (isEditing) {
-      onEdit(newTitle);
+    if (selectedBoard && !isEditing) {
+      setBoardTitle(selectedBoard.title);
     }
-    toastContainerRef.current.showToast("Successfully Updated!", "success");
+  }, [selectedBoard, isEditing]);
 
+  const handleEditClick = async () => {
+    if (isEditing) {
+      try {
+        const updatedBoard = {
+          ...selectedBoard,
+          title: boardTitle,
+          updatedAt: new Date().toISOString(),
+        };
+  
+        const result = await updateBoard(selectedBoard.id, updatedBoard);
+  
+        if (result.success) {
+          onBoardUpdate(updatedBoard);
+          toastContainerRef.current?.showToast("Board updated successfully!", "success");
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        console.error("Error updating board:", error);
+        toastContainerRef.current?.showToast("Failed to update board!", "error");
+        setBoardTitle(selectedBoard.title);
+      }
+    }
     setIsEditing(!isEditing);
   };
 
-  const handleDeleteClick = () => {
-    if (onDelete && selectedBoard) {
-      onDelete(selectedBoard.id);
-      toastContainerRef.current.showToast("Successfully Deleted!", "success");
-    } else {
-      console.error("selectedBoard tidak terdefinisi");
+  // Handle Delete Board
+  const handleDeleteClick = async (boardId) => {
+    if (window.confirm("Are you sure you want to delete this board?")) {
+      try {
+        const result = await deleteBoard(selectedBoard.id);
+
+        if (result.success) {
+          toastContainerRef.current?.showToast(
+            "Board deleted successfully!",
+            "success"
+          );
+          window.dispatchEvent(new CustomEvent("boardDeleted", { detail: { boardId } }));
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        console.error("Error deleting board:", error);
+        toastContainerRef.current?.showToast(
+          "Failed to delete board!",
+          "error"
+        );
+      }
     }
   };
 
+  // Handle Add Column
   const handleAddColumn = async () => {
-    const newColumn = {
-      title: `Column ${columns.length + 1}`,
-      cards: [],
-    };
+    try {
+      const newColumn = {
+        boardId: selectedBoard.id,
+        title: "New Column",
+        cards: [],
+      };
 
-    // Panggil fungsi untuk menambahkan kolom
-    await onAddColumn(newColumn);
+      const result = await addBoard(newColumn);
 
-    // Update selectedBoard dengan kolom baru
-    const updatedColumns = [...columns, newColumn];
-    setColumns(updatedColumns);
-    const updatedBoard = { ...selectedBoard, columns: updatedColumns };
-    await updateData("boards", selectedBoard.id, updatedBoard); // Memperbarui board di IndexedDB
-    toastContainerRef.current.showToast("Successfully Created!", "success");
-  };
-
-  const handleEditColumn = async (index, newColumnTitle) => {
-    const updatedColumns = columns.map((column, i) =>
-      i === index ? { ...column, title: newColumnTitle } : column
-    );
-    const updatedBoard = { ...selectedBoard, columns: updatedColumns };
-
-    await updateData("boards", selectedBoard.id, updatedBoard); // Memperbarui board di IndexedDB
-    setColumns(updatedColumns);
-    toastContainerRef.current.showToast("Successfully Updated!", "success");
-  };
-
-  const handleDeleteColumn = async (index) => {
-    const updatedColumns = columns.filter((_, i) => i !== index);
-    const updatedBoard = { ...selectedBoard, columns: updatedColumns };
-
-    await updateData("boards", selectedBoard.id, updatedBoard); // Memperbarui board di IndexedDB
-    setColumns(updatedColumns); // Update state lokal untuk kolom
-    toastContainerRef.current.showToast("Successfully Deleted!", "success");
+      if (result.success) {
+        toastContainerRef.current?.showToast(
+          "Column added successfully!",
+          "success"
+        );
+        window.dispatchEvent(new CustomEvent("columnAdded"));
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error("Error adding column:", error);
+      toastContainerRef.current?.showToast("Failed to add column!", "error");
+    }
   };
 
   return (
-    <div
-      className="shadow-2xl shadow-slate-900 text-white 
-bg-clip-padding backdrop-filter bg-white dark:bg-black 
-bg-opacity-10 backdrop-blur-lg dark:bg-opacity-60 
-dark:shadow-black p-4 flex flex-col 
-transition-transform duration-300 m-2 rounded-md flex flex-col flex-grow h-full"
-    >
-      {/* edit nama board */}
+    <div className="shadow-2xl shadow-slate-900 text-white bg-clip-padding backdrop-filter bg-white dark:bg-black bg-opacity-10 backdrop-blur-lg dark:bg-opacity-60 dark:shadow-black p-4 flex flex-col transition-transform duration-300 m-2 rounded-md flex-grow h-full">
       <div className="flex justify-between items-center">
         <div className="flex gap-2 items-center mb-4">
           <svg
@@ -97,10 +103,10 @@ transition-transform duration-300 m-2 rounded-md flex flex-col flex-grow h-full"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-proportions text-gray-800 dark:text-white"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-proportions text-gray-800 dark:text-white"
           >
             <rect width="20" height="16" x="2" y="4" rx="2" />
             <path d="M12 9v11" />
@@ -109,13 +115,14 @@ transition-transform duration-300 m-2 rounded-md flex flex-col flex-grow h-full"
           {isEditing ? (
             <input
               type="text"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="font-bold text-gray-700 dark:text-white text-xl bg-white bg-white bg-opacity-10 hover:bg-opacity-20 transition duration-500 shadow-inner shadow-slate-600/90 rounded-md p-2 outline-none "
+              value={boardTitle}
+              onChange={(e) => setBoardTitle(e.target.value)}
+              className="font-bold text-gray-700 dark:text-white text-xl bg-white bg-opacity-10 hover:bg-opacity-20 transition duration-500 shadow-inner shadow-slate-600/90 rounded-md p-2 outline-none"
+              autoFocus
             />
           ) : (
             <h2 className="font-bold text-gray-700 dark:text-white text-xl">
-              {newTitle}
+              {boardTitle}
             </h2>
           )}
         </div>
@@ -174,26 +181,19 @@ transition-transform duration-300 m-2 rounded-md flex flex-col flex-grow h-full"
 
       <hr className="h-px my-2 bg-black border-0" />
 
-      <div className="flex justify-between items-start h-full ">
+      <div className="flex justify-between items-start h-full">
         <div className="flex h-full w-full">
-          {columns.map((column, index) => (
+          {columns.map((column) => (
             <Column
               key={column.id}
-              title={column.title}
-              cards={column.cards}
-              onEditColumn={(newTitle) => handleEditColumn(index, newTitle)}
-              onDeleteColumn={() => handleDeleteColumn(index)}
-              onAddCard={(newCard) => handleAddCard(index, newCard)}
-              onMoveCard={handleMoveCard}
+              columnData={column}
+              selectedBoard={selectedBoard}
             />
           ))}
         </div>
         <button
           onClick={handleAddColumn}
-          className="py-1 px-2 text-white bg-clip-padding backdrop-filter 
-             backdrop-blur-lg bg-opacity-70 bg-green-500 
-             hover:bg-opacity-30 rounded-lg shadow-lg 
-             transition-colors duration-300 rounded ml-auto"
+          className="py-1 px-2 text-white bg-clip-padding backdrop-filter backdrop-blur-lg bg-opacity-70 bg-green-500 hover:bg-opacity-30 rounded-lg shadow-lg transition-colors duration-300 rounded ml-auto"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

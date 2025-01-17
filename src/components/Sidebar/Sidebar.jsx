@@ -1,18 +1,80 @@
-import React, { useState } from "react";
-import { addData } from "../../utils/idb";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  addBoard,
+  updateBoard,
+  deleteBoard,
+  getAllBoards,
+} from "../../services/board";
 import { v4 as uuidv4 } from "uuid";
 import ToastContainer from "../Toast/ToastContainer";
 
-export default function Sidebar({ boards, onSelectBoard, setBoards }) {
+export default function Sidebar({ boards, onSelectBoard }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [currentpageIndex, setCurrentpageIndex] = useState(0);
+  const [boardsPerPage, setBoardsPerPage] = useState(10);
+  const toastContainerRef = useRef();
 
-  const toastContainerRef = React.createRef();
+  const handleAddBoard = async () => {
+    if (!newBoardTitle.trim()) {
+      toastContainerRef.current?.showToast(
+        "Board title cannot be empty!",
+        "error"
+      );
+      return;
+    }
 
-  const boardsPerPage = 10;
+    try {
+      const newBoard = {
+        id: uuidv4(),
+        title: newBoardTitle,
+        columns: [
+          { id: uuidv4(), title: "Backlog", cards: [] },
+          { id: uuidv4(), title: "On Progress", cards: [] },
+          { id: uuidv4(), title: "Done", cards: [] },
+        ],
+      };
+
+      const result = await addBoard(newBoard);
+
+      if (result.success) {
+        toastContainerRef.current?.showToast(
+          "Board created successfully!",
+          "success"
+        );
+        window.dispatchEvent(new CustomEvent("boardAdded"));
+        setNewBoardTitle("");
+        setIsDropdownOpen(false);
+        onSelectBoard(newBoard); 
+        localStorage.setItem("selectedBoardId", newBoard.id);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error("Error creating board:", error);
+      toastContainerRef.current?.showToast("Failed to create board!", "error");
+    }
+  };
+
+  const updateBoardsPerPage = () => {
+    const screenWidth = window.innerWidth;
+    if (screenWidth >= 1200) setBoardsPerPage(9);
+    else if (screenWidth >= 992) setBoardsPerPage(8);
+    else if (screenWidth >= 768) setBoardsPerPage(6);
+    else setBoardsPerPage(4);
+  };
+
+  useEffect(() => {
+    updateBoardsPerPage();
+    window.addEventListener("resize", updateBoardsPerPage);
+    return () => window.removeEventListener("resize", updateBoardsPerPage);
+  }, []);
+
   const totalPages = Math.ceil(boards.length / boardsPerPage);
+  const startIndex = currentpageIndex * boardsPerPage;
+  const currentBoards = boards.slice(startIndex, startIndex + boardsPerPage);
+
   const handleNextBoard = () => {
     if (currentpageIndex < totalPages - 1) {
       setCurrentpageIndex(currentpageIndex + 1);
@@ -23,33 +85,6 @@ export default function Sidebar({ boards, onSelectBoard, setBoards }) {
     if (currentpageIndex > 0) {
       setCurrentpageIndex(currentpageIndex - 1);
     }
-  };
-
-  const startIndex = currentpageIndex * boardsPerPage;
-  const currentBoards = boards.slice(startIndex, startIndex + boardsPerPage);
-
-  const handleAddBoard = async () => {
-    if (!newBoardTitle) {
-      console.error("Nama board tidak boleh kosong");
-      return;
-    }
-    const newBoard = {
-      id: uuidv4(),
-      title: newBoardTitle,
-      columns: [
-        { title: "Backlog", cards: [] },
-        { title: "On Progress", cards: [] },
-        { title: "Done", cards: [] },
-      ],
-    };
-    await addData("boards", newBoard);
-    toastContainerRef.current.showToast(
-      "New Board Successfully added!",
-      "success"
-    );
-    setBoards((prevBoards) => [...prevBoards, newBoard]);
-    setNewBoardTitle("");
-    setIsDropdownOpen(false);
   };
 
   const countBoard = boards.length;
@@ -96,7 +131,6 @@ transition-transform duration-300 ${
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="mb-4 text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700  rounded-full flex items-center"
           >
-            {/* Chevron Icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -117,8 +151,8 @@ transition-transform duration-300 ${
         {isSidebarOpen && (
           <>
             <ul className="flex-grow">
-              {currentBoards.map((board, index) => (
-                <li key={index} className="mb-2">
+              {currentBoards.map((board) => (
+                <li key={board.id} className="mb-2">
                   <button
                     onClick={() => onSelectBoard(board)}
                     className="w-full text-left bg-slate-50 dark:bg-gray-700 bg-opacity-60 dark:bg-opacity-60 text-gray-700 dark:text-white rounded-lg p-4 shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"

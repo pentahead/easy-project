@@ -1,225 +1,234 @@
 import React, { useState, useEffect, useRef } from "react";
+import { addBoard, updateBoard, deleteBoard } from "../../services/board";
 import Card from "../Card/Card";
 import CardModal from "../CardModal/CardModal";
 import CardDetailModal from "../CardDetailModal/CardDetailModal";
+import ToastContainer from "../Toast/ToastContainer";
 
-export default function Column({
-  title,
-  cards,
-  onEditColumn,
-  onDeleteColumn,
-  onAddCard,
-  onMoveCard,
-}) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [newColumnTitle, setNewColumnTitle] = useState(title);
+export default function Column({ selectedBoard, columnData }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [columnTitle, setColumnTitle] = useState(columnData.title);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
-  const dropdownRef = useRef(null);
+  const toastContainerRef = useRef();
 
-  const handleAddCard = (newCard) => {
-    onAddCard(newCard);
-    setIsModalOpen(false);
-  };
+  // Handle Edit Column
+  const handleEditColumn = async () => {
+    if (isEditing) {
+      try {
+        const result = await updateBoard(columnData.id, {
+          ...columnData,
+          title: columnTitle,
+          updatedAt: new Date().toISOString(),
+        });
 
-  const handleUpdateCard = (updatedCard) => {
-    setIsDetailModalOpen(false);
-  };
-  
-  const handleEditColumn = () => {
-    onEditColumn(newColumnTitle);
-    setNewColumnTitle(newColumnTitle);
-    setIsDropdownOpen(false);
-  };
-  
-
-  const handleMoveCard = (card, targetColumnTitle) => {
-    const updatedColumns = selectedBoard.columns.map((column) => {
-      if (column.title === targetColumnTitle) {
-        return { ...column, cards: [...column.cards, card] }; // Tambahkan kartu ke kolom target
+        if (result.success) {
+          toastContainerRef.current?.showToast(
+            "Column updated successfully!",
+            "success"
+          );
+          window.dispatchEvent(new CustomEvent("columnUpdated"));
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        console.error("Error updating column:", error);
+        toastContainerRef.current?.showToast(
+          "Failed to update column!",
+          "error"
+        );
       }
-      return {
-        ...column,
-        cards: column.cards.filter((c) => c.title !== card.title),
-      };
-    });
-    // Update state or call a function to update the board with new columns
-  };
-  
-
-  const handleCardClick = (card) => {
-    console.log("Selected Card:", card);
-    setSelectedCard(card);
-    setIsDetailModalOpen(true);
+    }
+    setIsEditing(!isEditing);
   };
 
- 
+  // Handle Delete Column
+  const handleDeleteColumn = async () => {
+    if (window.confirm("Are you sure you want to delete this column?")) {
+      try {
+        const result = await deleteBoard(columnData.id);
 
-  const handleDragStart = (card) => {
-    const data = JSON.stringify(card);
-    window.localStorage.setItem("draggedCard", data);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const data = window.localStorage.getItem("draggedCard");
-    if (data) {
-      const draggedCard = JSON.parse(data);
-      onMoveCard(draggedCard, title);
+        if (result.success) {
+          toastContainerRef.current?.showToast(
+            "Column deleted successfully!",
+            "success"
+          );
+          window.dispatchEvent(new CustomEvent("columnDeleted"));
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        console.error("Error deleting column:", error);
+        toastContainerRef.current?.showToast(
+          "Failed to delete column!",
+          "error"
+        );
+      }
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
+  // Handle Add Card
+  const handleAddCard = async (cardData) => {
+    try {
+      const newCard = {
+        ...cardData,
+        columnId: columnData.id,
+        createdAt: new Date().toISOString(),
+      };
+
+      const result = awaitaddBoard(newCard);
+
+      if (result.success) {
+        setIsModalOpen(false);
+        toastContainerRef.current?.showToast(
+          "Card added successfully!",
+          "success"
+        );
+        window.dispatchEvent(new CustomEvent("cardAdded"));
+      } else {
+        throw new Error(result.error);
       }
-    };
+    } catch (error) {
+      console.error("Error adding card:", error);
+      toastContainerRef.current?.showToast("Failed to add card!", "error");
+    }
+  };
 
-    document.addEventListener("mousedown", handleClickOutside);
+  // Handle Update Card
+  const handleUpdateCard = async (cardId, updatedData) => {
+    try {
+      const result = await updateBoard(cardId, {
+        ...updatedData,
+        updatedAt: new Date().toISOString(),
+      });
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+      if (result.success) {
+        setIsDetailModalOpen(false);
+        toastContainerRef.current?.showToast(
+          "Card updated successfully!",
+          "success"
+        );
+        window.dispatchEvent(new CustomEvent("cardUpdated"));
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error("Error updating card:", error);
+      toastContainerRef.current?.showToast("Failed to update card!", "error");
+    }
+  };
 
   return (
     <div className="flex-1">
-      <div
-        className="bg-slate-50 dark:bg-gray-700 bg-opacity-60 dark:bg-opacity-60 text-gray-700 dark:text-white  p-4 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-4 m-2 flex flex-col h-full"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-      >
+      <div className="bg-slate-50 dark:bg-gray-700 bg-opacity-60 dark:bg-opacity-60 text-gray-700 dark:text-white p-4 shadow-md rounded-lg m-2 flex flex-col h-full">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-lg">{newColumnTitle}</h3>
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="text-gray-600 flex items-center"
-            >
+          {isEditing ? (
+            <input
+              type="text"
+              value={columnTitle}
+              onChange={(e) => setColumnTitle(e.target.value)}
+              className="font-semibold text-lg bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none"
+              autoFocus
+            />
+          ) : (
+            <h3 className="font-semibold text-lg">{columnTitle}</h3>
+          )}
+          <div className="flex gap-2">
+            <button onClick={handleEditColumn} className="text-blue-500">
+              {isEditing ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+              )}
+            </button>
+            <button onClick={handleDeleteColumn} className="text-red-500">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="size-6"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
               >
                 <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  fillRule="evenodd"
+                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                  clipRule="evenodd"
                 />
               </svg>
             </button>
-            {isDropdownOpen && (
-              <div className="absolute right-0 bg-white dark:bg-gray-700 shadow-lg rounded mt-2">
-                <div className="p-2">
-                  <div className="items-center mb-2">
-                    <input
-                      type="text"
-                      value={newColumnTitle}
-                      onChange={(e) => setNewColumnTitle(e.target.value)}
-                      className="border rounded p-1 flex-grow text-gray-800"
-                      placeholder="New Column Name"
-                    />
-                  </div>
-                  <button
-                    onClick={handleEditColumn}
-                    className="items-center text-blue-500"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="size-6"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                      />
-                    </svg>
-                    Save
-                  </button>
-                  <button
-                    onClick={onDeleteColumn}
-                    className="items-center text-red-500 ml-2"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="size-6"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                      />
-                    </svg>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="flex-1 flex-col flex-grow overflow-hidden">
-          {cards.map((card) => (
+        <div className="flex-1 overflow-y-auto">
+          {columnData.cards.map((card) => (
             <Card
-              key={card.title}
-              title={card.title}
-              description={card.description}
-              onClick={() => handleCardClick(card)}
-              onDragStart={() => handleDragStart(card)}
+              key={card.id}
+              card={card}
+              onCardClick={() => {
+                setSelectedCard(card);
+                setIsDetailModalOpen(true);
+              }}
             />
           ))}
         </div>
 
-        <div className="mt-auto">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center text-blue-500"
+        {/* Add Card Button */}
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="mt-4 flex items-center text-blue-500"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-1"
+            viewBox="0 0 20 20"
+            fill="currentColor"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="size-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4.5v15m7.5-7.5h-15"
-              />
-            </svg>
-            Add Card
-          </button>
-        </div>
+            <path
+              fillRule="evenodd"
+              d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Add Card
+        </button>
 
+        {/* Modals */}
         <CardModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedCard(null);
+          }}
           onAddCard={handleAddCard}
+          selectedCard={selectedCard}
         />
+
         <CardDetailModal
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
           card={selectedCard}
           onUpdateCard={handleUpdateCard}
         />
+
+        <ToastContainer ref={toastContainerRef} />
       </div>
     </div>
   );

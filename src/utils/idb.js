@@ -5,31 +5,32 @@ const dbPromise = openDB("easy-project", 1, {
     if (!db.objectStoreNames.contains("boards")) {
       db.createObjectStore("boards", { keyPath: "id", autoIncrement: true });
     }
-    if (!db.objectStoreNames.contains("columns")) {
-      db.createObjectStore("columns", { keyPath: "id", autoIncrement: true });
-    }
-    if (!db.objectStoreNames.contains("cards")) {
-      db.createObjectStore("cards", { keyPath: "id", autoIncrement: true });
-    }
   },
 });
 
-export const addData = async (storeName, data) => {
+export const addBoard = async (board) => {
   const db = await dbPromise;
-  return db.add(storeName, data);
+  return db.add("boards", board);
 };
 
-export const getAllData = async (storeName) => {
+export const getAllBoards = async () => {
   const db = await dbPromise;
-  return db.getAll(storeName);
+  return db.getAll("boards");
 };
 
-export const deleteData = async (storeName, key) => {
+export const getBoard = async (id) => {
   const db = await dbPromise;
-  return db.delete(storeName, key);
+  const tx = db.transaction("boards", "readonly");
+  const store = tx.objectStore("boards");
+  return store.get(id);
 };
 
-export const updateData = async (storeName, key, data) => {
+export const deleteBoard = async (id) => {
   const db = await dbPromise;
-  return db.put(storeName, { ...data, id: key });
+  return db.delete("boards", id);
+};
+
+export const updateBoard = async (id, board) => {
+  const db = await dbPromise;
+  return db.put("boards", { ...board, id });
 };
