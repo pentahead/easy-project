@@ -42,6 +42,7 @@ export default function Column({ selectedBoard, columnData }) {
     }
     setIsEditing(!isEditing);
   };
+  
 
   // Handle Delete Column
   const handleDeleteColumn = async () => {
